@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIOCREST // Epigenetic Remodeling & Chromatin Architecture Lab</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-base: #02050f;
+            --panel-bg: rgba(6, 12, 32, 0.92);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --border-glow: rgba(0, 242, 254, 0.15);
+            
+            --cyan: #00E5FF;
+            --blue: #38BDF8;
+            --emerald: #10B981;
+            --purple: #8B5CF6;
+            --crimson: #EF4444;
+            --gold: #F59E0B;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-base);
+            font-family: var(--font-sans);
+            color: var(--text-main);
+        }
+
+        /* Split-Screen Symmetrical Workspace Layout */
+        .desktop-app-container {
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Left Side: Control Board Terminal Panel */
+        .sidebar-panel-control {
+            background: #040814;
+            border-right: 1px solid var(--glass-border);
+            height: 100%;
+            position: relative;
+            z-index: 100;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .sidebar-scroll-area {
+            padding: 1.75rem;
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .app-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 1rem;
+        }
+
+        .app-title {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .app-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 0.25rem;
+        }
+
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timetable-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .timetable-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .timetable-card.active {
+            background: rgba(0, 242, 254, 0.04);
+            border-color: var(--cyan);
+            box-shadow: 0 4px 20px rgba(0, 242, 254, 0.05);
+        }
+
+        .timetable-card.completed {
+            border-left: 4px solid var(--emerald);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-meta-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .card-number {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(255,255,255,0.08);
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timetable-card.active .card-number {
+            background: var(--cyan);
+            color: #030712;
+        }
+
+        .timetable-card.completed .card-number {
+            background: var(--emerald);
+            color: #030712;
+        }
+
+        .card-meta-title h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+        }
+
+        .timetable-card.active .status-badge {
+            background: rgba(0, 242, 254, 0.15);
+            color: var(--cyan);
+        }
+
+        .timetable-card.completed .status-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--emerald);
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .embedded-terminal-tray {
+            margin-top: 1rem;
+            background: #010409;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--cyan), #0284c7);
+            color: #030712;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 0.75rem;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+
+        /* Right Side: Perfectly Centered 3D Viewport Workspace Corridor */
+        .preview-viewport-corridor {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #02050e;
+            overflow: hidden;
+        }
+
+        #webgl-canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Top Bar Floating HUD Alert Overlay Banner */
+        .top-hud-banner {
+            position: absolute;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 30px;
+            padding: 0.6rem 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 200;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .hud-beacon-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyan);
+            animation: beaconPulseAnim 2s infinite ease-in-out;
+        }
+
+        /* Explanatory Elaboration Insight Board Overlay */
+        .elaboration-container {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-top: 3px solid var(--cyan);
+            border-radius: 8px;
+            padding: 1.15rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .elaboration-container h4 {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .elaboration-body {
+            font-size: 0.8rem;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .elaboration-row {
+            border-left: 2px solid var(--blue);
+            background: rgba(255,255,255,0.01);
+            padding: 0.4rem 0.65rem;
+            border-radius: 0 4px 4px 0;
+        }
+        .elaboration-row strong { color: var(--blue); }
+
+        .tier-pill-box {
+            display: flex;
+            gap: 0.4rem;
+            background: rgba(0,0,0,0.3);
+            padding: 0.25rem;
+            border-radius: 50px;
+            width: fit-content;
+            margin: 0 auto;
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+
+        .tier-pill {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.35rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .tier-pill.active {
+            color: var(--cyan);
+            background: rgba(0, 229, 255, 0.1);
+        }
+
+        /* Realtime Telemetry Monitoring Blocks */
+        .telemetry-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding-top: 1.25rem;
+            margin-top: auto;
+        }
+
+        .telemetry-item {
+            background: rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.02);
+            padding: 0.6rem 0.85rem;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+        }
+
+        .telemetry-item span:first-child { color: var(--text-muted); }
+        .tel-val { color: var(--cyan); font-weight: 700; }
+        .tel-val.success { color: var(--emerald); }
+        .tel-val.warn { color: var(--crimson); }
+
+        /* Dynamic Localized HTML Labels Layer */
+        #spatial-html-overlay-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicks to pass through safely to WebGL */
+            z-index: 50;
+        }
+
+        .spatial-tag-node {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translate(-50%, -50%); /* Keeps elements perfectly centered over coordinates */
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .spatial-tag-node.visible { opacity: 1; }
+
+        .spatial-leader-line {
+            width: 90px;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0, 242, 254, 0.05), var(--cyan));
+            position: relative;
+        }
+        
+        .spatial-leader-line::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -2.5px;
+            width: 6px;
+            height: 6px;
+            background: var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--cyan);
+        }
+
+        .spatial-capsule {
+            background: rgba(3, 7, 18, 0.95);
+            border: 1px solid var(--cyan);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--cyan);
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            width: 230px;
+        }
+
+        .spatial-capsule span {
+            font-family: var(--font-sans);
+            font-size: 0.58rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            text-transform: none;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        @keyframes beaconPulseAnim {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="desktop-app-container">
+        
+        <div class="sidebar-panel-control interactive">
+            <div class="sidebar-scroll-area">
+                
+                <div class="app-header">
+                    <div class="app-title"><i class="fa-solid fa-microchip"></i> EPIGENETIC LAB</div>
+                    <div class="app-subtitle">Symmetrical Chromatin Workspace</div>
+                </div>
+
+                <div class="section-label"><i class="fa-solid fa-clock"></i> Interactive Timetable Modules</div>
+
+                <div class="timetable-stack">
+                    
+                    <div class="timetable-card active" id="card-methyl" onclick="changeWorkspaceContext('methyl')">
+                        <div class="card-header">
+                            <div class="card-meta-title">
+                                <div class="card-number">1</div>
+                                <h3>DNA Methylation Brush</h3>
+                            </div>
+                            <span class="status-badge">Active Scan</span>
+                        </div>
+                        <p class="card-desc">Target pulsing cytosine bases along the helix strand inside the 3D viewport to lock chromatin mapping.</p>
+                        
+                        <div class="embedded-terminal-tray" id="tray-methyl" onclick="event.stopPropagation()">
+                            <p style="font-size: 0.75rem; color: var(--text-muted);" id="methyl-status">Assembled: 0 / 6 Methyl Tags</p>
+                            <button class="action-btn" id="btn-brush" onclick="initiateInteractiveMethylationMode()">
+                                <i class="fa-solid fa-paint-brush"></i> Activate Click-to-Methylate
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="timetable-card" id="card-acetyl" onclick="changeWorkspaceContext('acetyl')">
+                        <div class="card-header">
+                            <div class="card-meta-title">
+                                <div class="card-number">2</div>
+                                <h3>Histone Acetylation Trigger</h3>
+                            </div>
+                            <span class="status-badge">Queued</span>
+                        </div>
+                        <p class="card-desc">Inject acetyl groups onto histone tail vectors to neutralize electrical loads and relax chromatin.</p>
+                        
+                        <div class="embedded-terminal-tray" id="tray-acetyl" style="display:none;" onclick="event.stopPropagation()">
+                            <p style="font-size: 0.75rem; color: var(--text-muted);" id="acetyl-status">Neutralized: 0 / 4 Tails</p>
+                            <button class="action-btn" style="background: linear-gradient(135deg, var(--emerald), #059669); color: #030712;" id="btn-trigger" onclick="initiateInteractiveAcetylationMode()">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Activate Histone Acetylation
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="timetable-card" id="card-race" onclick="changeWorkspaceContext('race')">
+                        <div class="card-header">
+                            <div class="card-meta-title">
+                                <div class="card-number">3</div>
+                                <h3>Pioneer TF Race Simulator</h3>
+                            </div>
+                            <span class="status-badge">Queued</span>
+                        </div>
+                        <p class="card-desc">Guide the Transcription Factor node into the uncoiled promoter ring while bypassing obstacles.</p>
+                        
+                        <div class="embedded-terminal-tray" id="tray-race" style="display:none;" onclick="event.stopPropagation()">
+                            <button class="action-btn" style="background: linear-gradient(135deg, var(--gold), #d97706); color: #030712;" id="btn-race" onclick="launchTranscriptionFactorRace()">
+                                <i class="fa-solid fa-gamepad"></i> Launch Playable TF Race
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="elaboration-container">
+                    <div class="tier-pill-box">
+                        <button class="tier-pill active" id="btn-tier-simple" onclick="setExplanatoryTier('simple')">Simple</button>
+                        <button class="tier-pill" id="btn-tier-professional" onclick="setExplanatoryTier('professional')">Professional</button>
+                        <button class="tier-pill" id="btn-tier-advanced" onclick="setExplanatoryTier('advanced')">PhD Data</button>
+                    </div>
+
+                    <h4 id="txt-elab-title"><i class="fa-solid fa-book-open"></i> Epigenetics Lesson Elaboration</h4>
+                    <div class="elaboration-body" id="txt-elab-body">
+                        <div class="elaboration-row"><strong>What it does:</strong> Locks DNA tightly onto histone proteins, silencing transcription.</div>
+                        <div class="elaboration-row"><strong>Simple Analogy:</strong> Turning a light switch 'OFF'. Wrapping a book closed so you can't read the page.</div>
+                    </div>
+                </div>
+
+                <div class="telemetry-stack">
+                    <div class="telemetry-item">
+                        <span>Chromatin Folding Density</span>
+                        <span class="tel-val" id="tel-density">12.5% Opened</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span>Gene Transcription Output</span>
+                        <span class="tel-val warn" id="tel-transcripts">Silenced (0 mRNA/sec)</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span>Histone Octamer Net Charge</span>
+                        <span class="tel-val success" id="tel-charge">Strongly Positive (+)</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="preview-viewport-corridor">
+            <div class="top-hud-banner">
+                <div class="hud-beacon-dot"></div>
+                <span id="lbl-hud-status-banner">CHROMATIN VIEWPORT LOCKED // SPATIAL HOOKS CALIBRATED</span>
+            </div>
+
+            <div id="webgl-canvas-container"></div>
+
+            <div id="spatial-html-overlay-layer">
+                
+                <div class="spatial-tag-node" id="lbl-histone-oct">
+                    <div class="spatial-leader-line"></div>
+                    <div class="spatial-capsule">
+                        Histone Core Octamer
+                        <span>Symmetrical spool protein cluster anchoring the DNA strand</span>
+                    </div>
+                </div>
+
+                <div class="spatial-tag-node" id="lbl-dna-thread">
+                    <div class="spatial-leader-line"></div>
+                    <div class="spatial-capsule">
+                        Nucleosomal DNA Strand
+                        <span>Double-helix strand carrying target genomic sequences</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /**
+         * 1. Symmetrically Aligned Three.js WebGL Core Environment Setup
+         */
+        const container = document.getElementById('webgl-canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x02050e);
+        scene.fog = new THREE.FogExp2(0x02050e, 0.05);
+
+        // Get actual local dimensions of the visual container panel
+        let viewW = container.clientWidth;
+        let viewH = container.clientHeight;
+
+        const camera = new THREE.PerspectiveCamera(40, viewW / viewH, 0.1, 1000);
+        // Look directly down origin (0,0,0) for clean symmetrical centering
+        camera.position.set(0, 0, 11.5); 
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(viewW, viewH);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // Symmetrical Scene Anchors & Structural Assembly Containers
+        const masterRigGroup = new THREE.Group();
+        scene.add(masterRigGroup);
+
+        const coreChromatinGroup = new THREE.Group();
+        masterRigGroup.add(coreChromatinGroup);
+
+        // Volumetric Architectural Light Maps
+        scene.add(new THREE.AmbientLight(0x0e172c, 4.5));
+        
+        const lightBlue = new THREE.PointLight(0x00F2FE, 5, 15);
+        lightBlue.position.set(-4, 3, 4);
+        scene.add(lightBlue);
+
+        const lightPurple = new THREE.PointLight(0xB517FF, 4, 15);
+        lightPurple.position.set(4, -3, 4);
+        scene.add(lightPurple);
+
+        /**
+         * 2. High-Clarity Parametric Molecular Structures Assembly
+         */
+        
+        // A. Histone Core Octamer Spool (Centered perfectly at 0,0,0)
+        const histoneOctamerGroup = new THREE.Group();
+        coreChromatinGroup.add(histoneOctamerGroup);
+
+        const histoneSubSphereGeo = new THREE.SphereGeometry(0.52, 32, 32);
+        const histoneSubSphereMat = new THREE.MeshPhysicalMaterial({
+            color: 0xF59E0B, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.9
+        });
+
+        // Generate 8 symmetrically nested protein subunits
+        const histonePositions = [
+            {x: -0.45, y: -0.45, z: -0.45}, {x: 0.45, y: -0.45, z: -0.45},
+            {x: -0.45, y: 0.45, z: -0.45}, {x: 0.45, y: 0.45, z: -0.45},
+            {x: -0.45, y: -0.45, z: 0.45}, {x: 0.45, y: -0.45, z: 0.45},
+            {x: -0.45, y: 0.45, z: 0.45}, {x: 0.45, y: 0.45, z: 0.45}
+        ];
+
+        histonePositions.forEach(pos => {
+            const hMesh = new THREE.Mesh(histoneSubSphereGeo, histoneSubSphereMat);
+            hMesh.position.set(pos.x, pos.y, pos.z);
+            histoneOctamerGroup.add(hMesh);
+        });
+
+        // B. Flexing Extensible Histone Tails
+        const tailJointGroup = new THREE.Group();
+        coreChromatinGroup.add(tailJointGroup);
+
+        const histoneTailsList = [];
+        const tailSegmentsCount = 9;
+        const tailMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.4 });
+
+        for (let t = 0; t < 8; t++) {
+            const tailGroup = new THREE.Group();
+            const rootPos = new THREE.Vector3(histonePositions[t].x * 1.1, histonePositions[t].y * 1.1, histonePositions[t].z * 1.1);
+            tailGroup.position.copy(rootPos);
+            tailJointGroup.add(tailGroup);
+
+            const segmentsArray = [];
+            const dir = rootPos.clone().normalize();
+            
+            for (let s = 0; s < tailSegmentsCount; s++) {
+                const segMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.045 - s * 0.003, 0.045 - (s + 1) * 0.003, 0.14, 8), tailMat);
+                segMesh.position.copy(dir).multiplyScalar(s * 0.14);
+                tailGroup.add(segMesh);
+                segmentsArray.push(segMesh);
+            }
+
+            // Interactive Acetyl Receptor Mesh at end of tails
+            const rGeo = new THREE.SphereGeometry(0.12, 16, 16);
+            const rMat = new THREE.MeshBasicMaterial({ color: 0x10B981, transparent: true, opacity: 0 });
+            const rMesh = new THREE.Mesh(rGeo, rMat);
+            rMesh.position.copy(dir).multiplyScalar(tailSegmentsCount * 0.14);
+            rMesh.userData = { id: `acetyl-target-${t}` };
+            tailGroup.add(rMesh);
+
+            histoneTailsList.push({ group: tailGroup, segments: segmentsArray, receptor: rMesh, acetylated: false });
+        }
+
+        // C. Double-Helix Strands wrapping around Histones
+        const dnaHelixCurveGroup = new THREE.Group();
+        coreChromatinGroup.add(dnaHelixCurveGroup);
+
+        const totalHelixPointsCount = 180;
+        const matStrandA = new THREE.MeshPhysicalMaterial({ color: 0x00F2FE, roughness: 0.1, metalness: 0.2 });
+        const matStrandB = new THREE.MeshPhysicalMaterial({ color: 0x38BDF8, roughness: 0.1, metalness: 0.2 });
+        const baseGeo = new THREE.IcosahedronGeometry(0.075, 2);
+
+        const strandNodesArrayA = [];
+        const strandNodesArrayB = [];
+        const rungBarsArray = [];
+        const cytosineTargetsList = [];
+        const cytosineIndices = [30, 55, 80, 105, 130, 155];
+
+        for (let i = 0; i < totalHelixPointsCount; i++) {
+            const nodeA = new THREE.Mesh(baseGeo, matStrandA);
+            const nodeB = new THREE.Mesh(baseGeo, matStrandB);
+            
+            dnaHelixCurveGroup.add(nodeA, nodeB);
+            strandNodesArrayA.push(nodeA);
+            strandNodesArrayB.push(nodeB);
+
+            const rungMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.0, 8), new THREE.MeshStandardMaterial({ color: 0x334155, transparent: true, opacity: 0.4 }));
+            dnaHelixCurveGroup.add(rungMesh);
+            rungBarsArray.push(rungMesh);
+
+            if (cytosineIndices.includes(i)) {
+                const glowMesh = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), new THREE.MeshBasicMaterial({ color: 0x00E5FF, transparent: true, opacity: 0 }));
+                glowMesh.userData = { id: `methyl-target-${i}` };
+                dnaHelixCurveGroup.add(glowMesh);
+                cytosineTargetsList.push({ mesh: glowMesh, parentNode: nodeA, methylated: false, index: i });
+            }
+        }
+
+        let chromatinRelaxationFactor = 0.12; // 0.12 = heterochromatin tightly spun, 0.85 = open euchromatin
+
+        function updateParametricChromatinCoilingCoordinates() {
+            const pitch = 0.11 + (chromatinRelaxationFactor * 0.09);
+            const spanHeight = (totalHelixPointsCount - 1) * pitch;
+            const centerYOffset = spanHeight / 2;
+
+            for (let i = 0; i < totalHelixPointsCount; i++) {
+                const angle = i * (0.25 - (chromatinRelaxationFactor * 0.08));
+                const currentRadius = 1.35 + (chromatinRelaxationFactor * 2.4);
+                const yPos = (i * pitch) - centerYOffset;
+
+                const xA = Math.sin(angle) * currentRadius;
+                const zA = Math.cos(angle) * currentRadius;
+                strandNodesArrayA[i].position.set(xA, yPos, zA);
+
+                const xB = Math.sin(angle + Math.PI) * currentRadius;
+                const zB = Math.cos(angle + Math.PI) * currentRadius;
+                strandNodesArrayB[i].position.set(xB, yPos, zB);
+
+                const rung = rungBarsArray[i];
+                rung.position.set((xA + xB) / 2, yPos, (zA + zB) / 2);
+                rung.scale.set(1, currentRadius * 2, 1);
+                rung.rotation.z = Math.PI / 2;
+                rung.rotation.y = angle;
+
+                const target = cytosineTargetsList.find(t => t.index === i);
+                if (target) target.mesh.position.set(xA, yPos, zA);
+            }
+        }
+
+        updateParametricChromatinCoilingCoordinates();
+
+        // Target promoter structural docking ring
+        const promoterBoxMesh = new THREE.Mesh(
+            new THREE.TorusGeometry(0.35, 0.05, 8, 32),
+            new THREE.MeshBasicMaterial({ color: 0xF59E0B, transparent: true, opacity: 0 })
+        );
+        promoterBoxMesh.position.set(0, 0, 1.8);
+        dnaHelixCurveGroup.add(promoterBoxMesh);
+
+        /**
+         * 3. Explanatory Context Database Management
+         */
+        let selectedExplanatoryTier = 'simple';
+        let currentWorkspaceContextStateKey = 'methyl';
+
+        const textbookDatabase = {
+            methyl: {
+                simple: {
+                    title: "DNA Methylation Brush",
+                    body: `<div class="elaboration-row"><strong>What it does:</strong> Locks DNA tightly onto histone proteins, silencing transcription.</div><div class="elaboration-row"><strong>Simple Analogy:</strong> Turning a light switch 'OFF'. Wrapping a book closed so you can't read the page.</div>`
+                },
+                professional: {
+                    title: "DNA Methyltransferase CpG Methylation",
+                    body: `<div class="elaboration-row"><strong>Mechanism:</strong> DNA Methyltransferases (DNMTs) catalyze the transfer of a methyl group to cytosine bases in CpG islands.</div><div class="elaboration-row"><strong>Transcription Halt:</strong> Recruiting Methyl-CpG-binding Domain proteins (MBDs) stabilizes repressive deacetylase complexes, forming closed heterochromatin.</div>`
+                },
+                advanced: {
+                    title: "Chromatin Condensation Transcriptional Inactivation",
+                    body: `<div class="elaboration-row"><strong>Biochemical Event:</strong> De-novo DNMT3a/3b methylation at CpG sequences initiates recruitment of MeCP2. This acts as a molecular scaffold for Sin3A/HDAC deacetylase complexes.</div>`
+                }
+            },
+            acetyl: {
+                simple: {
+                    title: "Histone Acetylation Trigger",
+                    body: `<div class="elaboration-row"><strong>What it does:</strong> Loosens DNA wrapping so genes can be easily read and decoded.</div><div class="elaboration-row"><strong>Simple Analogy:</strong> Turning a light switch 'ON'. Opening a book up so you can read the written instructions.</div>`
+                },
+                professional: {
+                    title: "Histone Acetyltransferase (HAT) Euchromatin Shift",
+                    body: `<div class="elaboration-row"><strong>Mechanism:</strong> Histone Acetyltransferases transfer acetyl groups to lysine residues on extended N-terminal histone tail segments.</div>`
+                },
+                advanced: {
+                    title: "HAT-Mediated Lysine Neutralization Mechanics",
+                    body: `<div class="elaboration-row"><strong>Epigenetic Shift:</strong> HAT enzymology modifies conserved H3K9 and H4K16 positive charges on tail domains. This eliminates histone affinity for phosphate backbones on adjacent nucleosomes.</div>`
+                }
+            },
+            race: {
+                simple: {
+                    title: "Pioneer TF Race Simulator",
+                    body: `<div class="elaboration-row"><strong>The Mission:</strong> Move your cursor over the WebGL screen. Guide the golden Transcription Factor to the golden promoter ring!</div>`
+                },
+                professional: {
+                    title: "Transcription Factor Competitive Kinetics",
+                    body: `<div class="elaboration-row"><strong>Dynamic Challenge:</strong> Newly opened pioneer binding locations are susceptible to de-novo methylation.</div>`
+                },
+                advanced: {
+                    title: "Thermodynamic Competition: Transcription Factors vs. DNMTs",
+                    body: `<div class="elaboration-row"><strong>Kinetic Equilibrium:</strong> Modeling competitive binding coefficients between activating pioneer factors (Oct4/Sox2) and DNMT gene closing networks.</div>`
+                }
+            }
+        };
+
+        function setExplanatoryTier(tierKey) {
+            selectedExplanatoryTier = tierKey;
+            document.querySelectorAll('.tier-pill').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-tier-${tierKey}`).classList.add('active');
+            updateExplanatoryUIPanels();
+        }
+
+        function updateExplanatoryUIPanels() {
+            const record = textbookDatabase[currentWorkspaceContextStateKey][selectedExplanatoryTier];
+            document.getElementById('txt-elab-title').innerHTML = `<i class="fa-solid fa-book-open"></i> ${record.title}`;
+            document.getElementById('txt-elab-body').innerHTML = record.body;
+        }
+
+        function changeWorkspaceContext(key) {
+            document.querySelectorAll('.timetable-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`card-${key}`).classList.add('active');
+
+            document.getElementById('tray-methyl').style.display = key === 'methyl' ? 'block' : 'none';
+            document.getElementById('tray-acetyl').style.display = key === 'acetyl' ? 'block' : 'none';
+            document.getElementById('tray-race').style.display = key === 'race' ? 'block' : 'none';
+
+            currentWorkspaceContextStateKey = key;
+            updateExplanatoryUIPanels();
+        }
+
+        /**
+         * 4. Micro-Interaction State Logic Systems
+         */
+        let activeStageMode = 'none';
+        let methylatedCount = 0;
+        let acetylatedCount = 0;
+
+        function initiateInteractiveMethylationMode() {
+            activeStageMode = 'methylation';
+            document.getElementById('lbl-hud-status-banner').innerText = "CLICK FLASHING BLUE CYTOSINE TARGETS ON THE DNA STRAND...";
+            document.getElementById('btn-brush').disabled = true;
+            cytosineTargetsList.forEach(t => t.mesh.material.opacity = 0.6);
+        }
+
+        function handleCytosineClick(target) {
+            if (target.methylated) return;
+            target.methylated = true;
+            methylatedCount++;
+
+            const mGeo = new THREE.SphereGeometry(0.13, 16, 16);
+            const mMat = new THREE.MeshStandardMaterial({ color: 0xEF4444, emissive: 0xEF4444, emissiveIntensity: 0.3 });
+            const mMesh = new THREE.Mesh(mGeo, mMat);
+            mMesh.position.copy(target.parentNode.position);
+            dnaHelixCurveGroup.add(mMesh);
+
+            gsap.from(mMesh.scale, { x: 0, y: 0, z: 0, duration: 0.3, ease: "back.out" });
+            target.mesh.material.opacity = 0;
+
+            // Condense structural geometry down continuously based on methylation step density
+            gsap.to({}, {
+                duration: 0.4,
+                onUpdate: () => {
+                    const ratio = methylatedCount / 6;
+                    chromatinRelaxationFactor = 0.85 - (ratio * (0.85 - 0.12));
+                    updateParametricChromatinCoilingCoordinates();
+                    mMesh.position.copy(target.parentNode.position);
+                }
+            });
+
+            document.getElementById('methyl-status').innerText = `Assembled: ${methylatedCount} / 6 Methyl Tags`;
+
+            if (methylatedCount === 6) {
+                document.getElementById('card-methyl').className = "timetable-card completed";
+                document.getElementById('tray-methyl').style.display = "none";
+                document.getElementById('card-acetyl').className = "timetable-card active";
+                document.getElementById('tray-acetyl').style.display = "block";
+
+                activeStageMode = 'none';
+                document.getElementById('lbl-hud-status-banner').innerText = "DNA CONDENSED // CHROMATIN CORE ARCHITECTURE LOCKED";
+                changeWorkspaceContext('acetyl');
+            }
+        }
+
+        function initiateInteractiveAcetylationMode() {
+            activeStageMode = 'acetylation';
+            document.getElementById('lbl-hud-status-banner').innerText = "CLICK HISTONE TAIL RECEPTORS TO INJECT ACETYL MOLECULES...";
+            document.getElementById('btn-trigger').disabled = true;
+            histoneTailsList.forEach(t => t.receptor.material.opacity = 0.6);
+        }
+
+        function handleHistoneTailClick(tail) {
+            if (tail.acetylated) return;
+            tail.acetylated = true;
+            acetylatedCount++;
+
+            const aGeo = new THREE.IcosahedronGeometry(0.12, 1);
+            const aMat = new THREE.MeshStandardMaterial({ color: 0x10B981, emissive: 0x10B981, emissiveIntensity: 0.4 });
+            const aMesh = new THREE.Mesh(aGeo, aMat);
+            aMesh.position.set(0, 0, 4);
+            coreChromatinGroup.add(aMesh);
+
+            const targetPos = new THREE.Vector3();
+            tail.receptor.getWorldPosition(targetPos);
+            coreChromatinGroup.worldToLocal(targetPos);
+
+            gsap.to(aMesh.position, {
+                x: targetPos.x, y: targetPos.y, z: targetPos.z,
+                duration: 0.6, ease: "power2.out",
+                onComplete: () => {
+                    tail.receptor.material.color.setHex(0x10B981);
+                    tail.receptor.material.opacity = 0.8;
+                    coreChromatinGroup.remove(aMesh);
+
+                    const ratio = acetylatedCount / 4;
+                    document.getElementById('tel-charge').innerText = ratio >= 1 ? "Neutralized Charge (0)" : "Weakly Positive (+)";
+
+                    gsap.to({}, {
+                        duration: 0.5,
+                        onUpdate: () => {
+                            chromatinRelaxationFactor = 0.12 + (ratio * (0.85 - 0.12));
+                            updateParametricChromatinCoilingCoordinates();
+                        }
+                    });
+                }
+            });
+
+            document.getElementById('acetyl-status').innerText = `Neutralized: ${acetylatedCount} / 4 Tails`;
+
+            if (acetylatedCount === 4) {
+                document.getElementById('tel-density').innerText = "85.0% Opened";
+                document.getElementById('tel-transcripts').innerText = "Exposed (0 mRNA/sec)";
+                promoterBoxMesh.material.opacity = 0.85;
+
+                document.getElementById('card-acetyl').className = "timetable-card completed";
+                document.getElementById('tray-acetyl').style.display = "none";
+                document.getElementById('card-race').className = "timetable-card active";
+                document.getElementById('tray-race').style.display = "block";
+
+                activeStageMode = 'none';
+                document.getElementById('lbl-hud-status-banner').innerText = "CHROMATIN UNCOILED // PROMOTER DOMAIN NOW ACCESSIBLE";
+                changeWorkspaceContext('race');
+            }
+        }
+
+        // Playable TF Mini-game Engine variables
+        let playableTFObject = null;
+        let obstaclesArray = [];
+        let isGameFinished = false;
+
+        function launchTranscriptionFactorRace() {
+            activeStageMode = 'race';
+            document.getElementById('btn-race').disabled = true;
+            document.getElementById('lbl-hud-status-banner').innerText = "DRAG MOUSE OVER VIEWPORT TO GUIDE GOLDEN TF TO PROMOTER COMPARTMENT...";
+
+            playableTFObject = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 2), new THREE.MeshStandardMaterial({ color: 0xF59E0B, emissive: 0xF59E0B, emissiveIntensity: 0.4 }));
+            playableTFObject.position.set(-3, 0, 1.8);
+            scene.add(playableTFObject);
+
+            for (let i = 0; i < 3; i++) {
+                const obs = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), new THREE.MeshStandardMaterial({ color: 0xEF4444, emissive: 0xEF4444, emissiveIntensity: 0.3 }));
+                obs.position.set(-1.2 + (i * 1.2), (Math.random() - 0.5) * 3, 1.8);
+                scene.add(obs);
+                obstaclesArray.push({ mesh: obs, dir: 1, speed: 0.035 + (i * 0.008) });
+            }
+
+            container.addEventListener('mousemove', processTFGameMovement);
+            isGameFinished = false;
+        }
+
+        function processTFGameMovement(e) {
+            if (activeStageMode !== 'race' || isGameFinished) return;
+
+            const rect = container.getBoundingClientRect();
+            const normX = ((e.clientX - rect.left) / viewW) * 2 - 1;
+            const normY = -((e.clientY - rect.top) / viewH) * 2 + 1;
+
+            // Translate matrix bounds directly into spatial geometry limits
+            const targetX = normX * 4.0;
+            const targetY = normY * 3.0;
+
+            playableTFObject.position.x += (targetX - playableTFObject.position.x) * 0.15;
+            playableTFObject.position.y += (targetY - playableTFObject.position.y) * 0.15;
+
+            // Check obstacle boundaries
+            obstaclesArray.forEach(o => {
+                if (playableTFObject.position.distanceTo(o.mesh.position) < 0.4) {
+                    document.getElementById('lbl-hud-status-banner').innerText = "COLLISION METRIC EXCEEDED. POSITION RE-INDEXED.";
+                    gsap.to(playableTFObject.position, { x: -3, y: 0, duration: 0.3 });
+                }
+            });
+
+            // Target docking check
+            const pWorldPos = new THREE.Vector3();
+            promoterBoxMesh.getWorldPosition(pWorldPos);
+
+            if (playableTFObject.position.distanceTo(pWorldPos) < 0.45) {
+                isGameFinished = true;
+                container.removeEventListener('mousemove', processTFGameMovement);
+                document.getElementById('lbl-hud-status-banner').innerText = "TRANSCRIPTION FACTOR STATIONED // POLYMERASE SYNTHESIS RUNNING!";
+                document.getElementById('tel-transcripts').innerText = "Active (280 mRNA/sec)";
+                document.getElementById('tel-transcripts').className = "tel-val success";
+
+                // Generate basic upward stream particles simulation
+                const pGroup = new THREE.Group();
+                scene.add(pGroup);
+                for(let p=0; p<30; p++) {
+                    const pm = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0x8B5CF6 }));
+                    pm.position.copy(pWorldPos);
+                    pGroup.add(pm);
+                    gsap.to(pm.position, {
+                        x: (Math.random() - 0.5) * 6, y: 4.0, z: (Math.random() - 0.5) * 4,
+                        duration: 1.2 + Math.random() * 1.5, delay: p * 0.05, repeat: -1
+                    });
+                }
+
+                setTimeout(() => {
+                    scene.remove(playableTFObject);
+                    obstaclesArray.forEach(o => scene.remove(o.mesh));
+                    obstaclesArray = [];
+                    scene.remove(pGroup);
+                    resetSimulationLabState();
+                }, 5000);
+            }
+        }
+
+        function resetSimulationLabState() {
+            chromatinRelaxationFactor = 0.12;
+            updateParametricChromatinCoilingCoordinates();
+            methylatedCount = 0;
+            acetylatedCount = 0;
+            activeStageMode = 'none';
+            promoterBoxMesh.material.opacity = 0;
+
+            document.getElementById('tel-density').innerText = "12.5% Opened";
+            document.getElementById('tel-transcripts').innerText = "Silenced (0 mRNA/sec)";
+            document.getElementById('tel-transcripts').className = "tel-val warn";
+            document.getElementById('tel-charge').innerText = "Strongly Positive (+)";
+
+            document.querySelectorAll('.timetable-card').forEach(c => c.className = "timetable-card");
+            document.getElementById('card-methyl').className = "timetable-card active";
+            document.getElementById('btn-brush').disabled = false;
+            document.getElementById('btn-trigger').disabled = false;
+            document.getElementById('btn-race').disabled = false;
+
+            document.getElementById('methyl-status').innerText = "Assembled: 0 / 6 Methyl Tags";
+            document.getElementById('acetyl-status').innerText = "Neutralized: 0 / 4 Tails";
+            document.getElementById('lbl-hud-status-banner').innerText = "CHROMATIN VIEWPORT LOCKED // SPATIAL HOOKS CALIBRATED";
+            changeWorkspaceContext('methyl');
+        }
+
+        /**
+         * 5. Symmetrical Direct Point Raycaster Handling
+         */
+        const raycaster = new THREE.Raycaster();
+        const mouseVector = new THREE.Vector2();
+
+        window.addEventListener('click', (e) => {
+            // Prevent interference if clicking left side dashboard interface
+            if (e.clientX < 460) return;
+
+            const rect = container.getBoundingClientRect();
+            mouseVector.x = ((e.clientX - rect.left) / viewW) * 2 - 1;
+            mouseVector.y = -((e.clientY - rect.top) / viewH) * 2 + 1;
+
+            raycaster.setFromCamera(mouseVector, camera);
+
+            const activeTargets = [];
+            if (activeStageMode === 'methylation') cytosineTargetsList.forEach(t => activeTargets.push(t.mesh));
+            if (activeStageMode === 'acetylation') histoneTailsList.forEach(t => activeTargets.push(t.receptor));
+
+            const hits = raycaster.intersectObjects(activeTargets);
+            if (hits.length > 0) {
+                const hitId = hits[0].object.userData.id;
+                if (activeStageMode === 'methylation') {
+                    const match = cytosineTargetsList.find(t => t.mesh.userData.id === hitId);
+                    if (match) handleCytosineClick(match);
+                } else if (activeStageMode === 'acetylation') {
+                    const match = histoneTailsList.find(t => t.receptor.userData.id === hitId);
+                    if (match) handleHistoneTailClick(match);
+                }
+            }
+        });
+
+        /**
+         * 6. Fixed Local HTML Projected Annotation Hooks Coordinates Mapper
+         */
+        const projectionProjVec = new THREE.Vector3();
+
+        function synchronizeProjectedLabels() {
+            // A. Core Histone Octamer Tag
+            projectionProjVec.setFromMatrixPosition(histoneOctamerGroup.matrixWorld);
+            projectionProjVec.project(camera);
+            
+            // Map directly within local viewport bounds width and height
+            const histoneX = (projectionProjVec.x * 0.5 + 0.5) * viewW;
+            const histoneY = (projectionProjVec.y * -0.5 + 0.5) * viewH;
+
+            const labelHistone = document.getElementById('lbl-histone-oct');
+            labelHistone.style.left = `${histoneX}px`;
+            labelHistone.style.top = `${histoneY - 75}px`;
+            labelHistone.classList.add('visible');
+
+            // B. DNA Strand Tag
+            projectionProjVec.setFromMatrixPosition(dnaHelixCurveGroup.matrixWorld);
+            projectionProjVec.project(camera);
+
+            const dnaX = (projectionProjVec.x * 0.5 + 0.5) * viewW;
+            const dnaY = (projectionProjVec.y * -0.5 + 0.5) * viewH;
+
+            const labelDna = document.getElementById('lbl-dna-thread');
+            labelDna.style.left = `${dnaX}px`;
+            labelDna.style.top = `${dnaY + 95}px`;
+            labelDna.classList.add('visible');
+        }
+
+        /**
+         * 7. Master Render Loop Ticker
+         */
+        const globalClock = new THREE.Clock();
+
+        function renderFrameLoop() {
+            requestAnimationFrame(renderFrameLoop);
+            const delta = globalClock.getElapsedTime();
+
+            // Clean, steady rotational speed centered on a true axis
+            coreChromatinGroup.rotation.y = delta * 0.2;
+            coreChromatinGroup.rotation.x = Math.sin(delta * 0.1) * 0.08;
+
+            if (activeStageMode === 'race' && !isGameFinished) {
+                obstaclesArray.forEach(o => {
+                    o.mesh.position.y += o.speed * o.dir;
+                    if (Math.abs(o.mesh.position.y) > 1.8) o.dir *= -1;
+                });
+            }
+
+            synchronizeProjectedLabels();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            viewW = container.clientWidth;
+            viewH = container.clientHeight;
+            camera.aspect = viewW / viewH;
+            camera.updateProjectionMatrix();
+            renderer.setSize(viewW, viewH);
+        });
+
+        // Initialize App Configuration
+        renderFrameLoop();
+        setExplanatoryTier('simple');
+    </script>
+</body>
+</html>
