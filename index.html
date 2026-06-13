@@ -134,6 +134,7 @@
 
         .timetable-card.completed {
             border-left: 4px solid var(--emerald);
+            background: rgba(16, 185, 129, 0.02);
         }
 
         .card-header {
@@ -395,7 +396,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Allows clicks to pass through safely to WebGL */
+            pointer-events: none;
             z-index: 50;
         }
 
@@ -404,7 +405,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            transform: translate(-50%, -50%); /* Keeps elements perfectly centered over coordinates */
+            transform: translate(-50%, -50%);
             transition: opacity 0.3s ease;
             opacity: 0;
         }
@@ -484,12 +485,12 @@
                                 <div class="card-number">1</div>
                                 <h3>DNA Methylation Brush</h3>
                             </div>
-                            <span class="status-badge">Active Scan</span>
+                            <span class="status-badge" id="badge-methyl">Active Scan</span>
                         </div>
                         <p class="card-desc">Target pulsing cytosine bases along the helix strand inside the 3D viewport to lock chromatin mapping.</p>
                         
                         <div class="embedded-terminal-tray" id="tray-methyl" onclick="event.stopPropagation()">
-                            <p style="font-size: 0.75rem; color: var(--text-muted);" id="methyl-status">Assembled: 0 / 6 Methyl Tags</p>
+                            <p style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--cyan); font-weight: 600;" id="methyl-status">Assembled: 0 / 6 Methyl Tags</p>
                             <button class="action-btn" id="btn-brush" onclick="initiateInteractiveMethylationMode()">
                                 <i class="fa-solid fa-paint-brush"></i> Activate Click-to-Methylate
                             </button>
@@ -502,12 +503,12 @@
                                 <div class="card-number">2</div>
                                 <h3>Histone Acetylation Trigger</h3>
                             </div>
-                            <span class="status-badge">Queued</span>
+                            <span class="status-badge" id="badge-acetyl">Queued</span>
                         </div>
                         <p class="card-desc">Inject acetyl groups onto histone tail vectors to neutralize electrical loads and relax chromatin.</p>
                         
                         <div class="embedded-terminal-tray" id="tray-acetyl" style="display:none;" onclick="event.stopPropagation()">
-                            <p style="font-size: 0.75rem; color: var(--text-muted);" id="acetyl-status">Neutralized: 0 / 4 Tails</p>
+                            <p style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--emerald); font-weight: 600;" id="acetyl-status">Neutralized: 0 / 4 Tails</p>
                             <button class="action-btn" style="background: linear-gradient(135deg, var(--emerald), #059669); color: #030712;" id="btn-trigger" onclick="initiateInteractiveAcetylationMode()">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> Activate Histone Acetylation
                             </button>
@@ -520,7 +521,7 @@
                                 <div class="card-number">3</div>
                                 <h3>Pioneer TF Race Simulator</h3>
                             </div>
-                            <span class="status-badge">Queued</span>
+                            <span class="status-badge" id="badge-race">Queued</span>
                         </div>
                         <p class="card-desc">Guide the Transcription Factor node into the uncoiled promoter ring while bypassing obstacles.</p>
                         
@@ -598,19 +599,17 @@
 
     <script>
         /**
-         * 1. Symmetrically Aligned Three.js WebGL Core Environment Setup
+         * 1. Three.js WebGL Environment Setup
          */
         const container = document.getElementById('webgl-canvas-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x02050e);
         scene.fog = new THREE.FogExp2(0x02050e, 0.05);
 
-        // Get actual local dimensions of the visual container panel
         let viewW = container.clientWidth;
         let viewH = container.clientHeight;
 
         const camera = new THREE.PerspectiveCamera(40, viewW / viewH, 0.1, 1000);
-        // Look directly down origin (0,0,0) for clean symmetrical centering
         camera.position.set(0, 0, 11.5); 
         camera.lookAt(0, 0, 0);
 
@@ -619,14 +618,12 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // Symmetrical Scene Anchors & Structural Assembly Containers
         const masterRigGroup = new THREE.Group();
         scene.add(masterRigGroup);
 
         const coreChromatinGroup = new THREE.Group();
         masterRigGroup.add(coreChromatinGroup);
 
-        // Volumetric Architectural Light Maps
         scene.add(new THREE.AmbientLight(0x0e172c, 4.5));
         
         const lightBlue = new THREE.PointLight(0x00F2FE, 5, 15);
@@ -638,10 +635,8 @@
         scene.add(lightPurple);
 
         /**
-         * 2. High-Clarity Parametric Molecular Structures Assembly
+         * 2. Molecular Structures Assembly
          */
-        
-        // A. Histone Core Octamer Spool (Centered perfectly at 0,0,0)
         const histoneOctamerGroup = new THREE.Group();
         coreChromatinGroup.add(histoneOctamerGroup);
 
@@ -650,7 +645,6 @@
             color: 0xF59E0B, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.9
         });
 
-        // Generate 8 symmetrically nested protein subunits
         const histonePositions = [
             {x: -0.45, y: -0.45, z: -0.45}, {x: 0.45, y: -0.45, z: -0.45},
             {x: -0.45, y: 0.45, z: -0.45}, {x: 0.45, y: 0.45, z: -0.45},
@@ -664,7 +658,6 @@
             histoneOctamerGroup.add(hMesh);
         });
 
-        // B. Flexing Extensible Histone Tails
         const tailJointGroup = new THREE.Group();
         coreChromatinGroup.add(tailJointGroup);
 
@@ -688,7 +681,6 @@
                 segmentsArray.push(segMesh);
             }
 
-            // Interactive Acetyl Receptor Mesh at end of tails
             const rGeo = new THREE.SphereGeometry(0.12, 16, 16);
             const rMat = new THREE.MeshBasicMaterial({ color: 0x10B981, transparent: true, opacity: 0 });
             const rMesh = new THREE.Mesh(rGeo, rMat);
@@ -699,7 +691,6 @@
             histoneTailsList.push({ group: tailGroup, segments: segmentsArray, receptor: rMesh, acetylated: false });
         }
 
-        // C. Double-Helix Strands wrapping around Histones
         const dnaHelixCurveGroup = new THREE.Group();
         coreChromatinGroup.add(dnaHelixCurveGroup);
 
@@ -734,7 +725,7 @@
             }
         }
 
-        let chromatinRelaxationFactor = 0.12; // 0.12 = heterochromatin tightly spun, 0.85 = open euchromatin
+        let chromatinRelaxationFactor = 0.12;
 
         function updateParametricChromatinCoilingCoordinates() {
             const pitch = 0.11 + (chromatinRelaxationFactor * 0.09);
@@ -767,7 +758,6 @@
 
         updateParametricChromatinCoilingCoordinates();
 
-        // Target promoter structural docking ring
         const promoterBoxMesh = new THREE.Mesh(
             new THREE.TorusGeometry(0.35, 0.05, 8, 32),
             new THREE.MeshBasicMaterial({ color: 0xF59E0B, transparent: true, opacity: 0 })
@@ -852,7 +842,7 @@
         }
 
         /**
-         * 4. Micro-Interaction State Logic Systems
+         * 4. Micro-Interaction State Logic Systems (FIXED REACTIVE REAL-TIME RENDERING)
          */
         let activeStageMode = 'none';
         let methylatedCount = 0;
@@ -870,6 +860,9 @@
             target.methylated = true;
             methylatedCount++;
 
+            // FIX: Instantly rewrite text metrics inside the timetable layout container panel
+            document.getElementById('methyl-status').innerText = `Assembled: ${methylatedCount} / 6 Methyl Tags`;
+
             const mGeo = new THREE.SphereGeometry(0.13, 16, 16);
             const mMat = new THREE.MeshStandardMaterial({ color: 0xEF4444, emissive: 0xEF4444, emissiveIntensity: 0.3 });
             const mMesh = new THREE.Mesh(mGeo, mMat);
@@ -879,7 +872,6 @@
             gsap.from(mMesh.scale, { x: 0, y: 0, z: 0, duration: 0.3, ease: "back.out" });
             target.mesh.material.opacity = 0;
 
-            // Condense structural geometry down continuously based on methylation step density
             gsap.to({}, {
                 duration: 0.4,
                 onUpdate: () => {
@@ -890,12 +882,13 @@
                 }
             });
 
-            document.getElementById('methyl-status').innerText = `Assembled: ${methylatedCount} / 6 Methyl Tags`;
-
             if (methylatedCount === 6) {
                 document.getElementById('card-methyl').className = "timetable-card completed";
+                document.getElementById('badge-methyl').innerText = "Completed";
                 document.getElementById('tray-methyl').style.display = "none";
+                
                 document.getElementById('card-acetyl').className = "timetable-card active";
+                document.getElementById('badge-acetyl').innerText = "Active Scan";
                 document.getElementById('tray-acetyl').style.display = "block";
 
                 activeStageMode = 'none';
@@ -915,6 +908,9 @@
             if (tail.acetylated) return;
             tail.acetylated = true;
             acetylatedCount++;
+
+            // FIX: Instantly rewrite progressive values to the DOM container element
+            document.getElementById('acetyl-status').innerText = `Neutralized: ${acetylatedCount} / 4 Tails`;
 
             const aGeo = new THREE.IcosahedronGeometry(0.12, 1);
             const aMat = new THREE.MeshStandardMaterial({ color: 0x10B981, emissive: 0x10B981, emissiveIntensity: 0.4 });
@@ -947,16 +943,17 @@
                 }
             });
 
-            document.getElementById('acetyl-status').innerText = `Neutralized: ${acetylatedCount} / 4 Tails`;
-
             if (acetylatedCount === 4) {
                 document.getElementById('tel-density').innerText = "85.0% Opened";
                 document.getElementById('tel-transcripts').innerText = "Exposed (0 mRNA/sec)";
                 promoterBoxMesh.material.opacity = 0.85;
 
                 document.getElementById('card-acetyl').className = "timetable-card completed";
+                document.getElementById('badge-acetyl').innerText = "Completed";
                 document.getElementById('tray-acetyl').style.display = "none";
+                
                 document.getElementById('card-race').className = "timetable-card active";
+                document.getElementById('badge-race').innerText = "Ready";
                 document.getElementById('tray-race').style.display = "block";
 
                 activeStageMode = 'none';
@@ -965,7 +962,6 @@
             }
         }
 
-        // Playable TF Mini-game Engine variables
         let playableTFObject = null;
         let obstaclesArray = [];
         let isGameFinished = false;
@@ -997,14 +993,12 @@
             const normX = ((e.clientX - rect.left) / viewW) * 2 - 1;
             const normY = -((e.clientY - rect.top) / viewH) * 2 + 1;
 
-            // Translate matrix bounds directly into spatial geometry limits
             const targetX = normX * 4.0;
             const targetY = normY * 3.0;
 
             playableTFObject.position.x += (targetX - playableTFObject.position.x) * 0.15;
             playableTFObject.position.y += (targetY - playableTFObject.position.y) * 0.15;
 
-            // Check obstacle boundaries
             obstaclesArray.forEach(o => {
                 if (playableTFObject.position.distanceTo(o.mesh.position) < 0.4) {
                     document.getElementById('lbl-hud-status-banner').innerText = "COLLISION METRIC EXCEEDED. POSITION RE-INDEXED.";
@@ -1012,7 +1006,6 @@
                 }
             });
 
-            // Target docking check
             const pWorldPos = new THREE.Vector3();
             promoterBoxMesh.getWorldPosition(pWorldPos);
 
@@ -1023,7 +1016,9 @@
                 document.getElementById('tel-transcripts').innerText = "Active (280 mRNA/sec)";
                 document.getElementById('tel-transcripts').className = "tel-val success";
 
-                // Generate basic upward stream particles simulation
+                document.getElementById('card-race').className = "timetable-card completed";
+                document.getElementById('badge-race').innerText = "Completed";
+
                 const pGroup = new THREE.Group();
                 scene.add(pGroup);
                 for(let p=0; p<30; p++) {
@@ -1061,6 +1056,11 @@
 
             document.querySelectorAll('.timetable-card').forEach(c => c.className = "timetable-card");
             document.getElementById('card-methyl').className = "timetable-card active";
+            
+            document.getElementById('badge-methyl').innerText = "Active Scan";
+            document.getElementById('badge-acetyl').innerText = "Queued";
+            document.getElementById('badge-race').innerText = "Queued";
+
             document.getElementById('btn-brush').disabled = false;
             document.getElementById('btn-trigger').disabled = false;
             document.getElementById('btn-race').disabled = false;
@@ -1078,7 +1078,6 @@
         const mouseVector = new THREE.Vector2();
 
         window.addEventListener('click', (e) => {
-            // Prevent interference if clicking left side dashboard interface
             if (e.clientX < 460) return;
 
             const rect = container.getBoundingClientRect();
@@ -1110,11 +1109,9 @@
         const projectionProjVec = new THREE.Vector3();
 
         function synchronizeProjectedLabels() {
-            // A. Core Histone Octamer Tag
             projectionProjVec.setFromMatrixPosition(histoneOctamerGroup.matrixWorld);
             projectionProjVec.project(camera);
             
-            // Map directly within local viewport bounds width and height
             const histoneX = (projectionProjVec.x * 0.5 + 0.5) * viewW;
             const histoneY = (projectionProjVec.y * -0.5 + 0.5) * viewH;
 
@@ -1123,7 +1120,6 @@
             labelHistone.style.top = `${histoneY - 75}px`;
             labelHistone.classList.add('visible');
 
-            // B. DNA Strand Tag
             projectionProjVec.setFromMatrixPosition(dnaHelixCurveGroup.matrixWorld);
             projectionProjVec.project(camera);
 
@@ -1133,6 +1129,7 @@
             const labelDna = document.getElementById('lbl-dna-thread');
             labelDna.style.left = `${dnaX}px`;
             labelDna.style.top = `${dnaY + 95}px`;
+            labelDna.style.zIndex = "10";
             labelDna.classList.add('visible');
         }
 
@@ -1145,7 +1142,6 @@
             requestAnimationFrame(renderFrameLoop);
             const delta = globalClock.getElapsedTime();
 
-            // Clean, steady rotational speed centered on a true axis
             coreChromatinGroup.rotation.y = delta * 0.2;
             coreChromatinGroup.rotation.x = Math.sin(delta * 0.1) * 0.08;
 
@@ -1168,7 +1164,6 @@
             renderer.setSize(viewW, viewH);
         });
 
-        // Initialize App Configuration
         renderFrameLoop();
         setExplanatoryTier('simple');
     </script>
